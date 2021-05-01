@@ -3,6 +3,11 @@ variable "cloudflare_api_token" {
     type = string
 }
 
+variable "cloudflare_zone_id" {
+  description = "Cloudflare Zone ID"
+  type = string
+}
+
 variable "resource_group" {
   description = "Azure resource group name"
   type = string
@@ -28,7 +33,3 @@ variable "compress_types" {
   type = list(string)
 }
 
-variable "cloudflare_zone_id" {
-  description = "Cloudflare Zone ID"
-  type = string
-}

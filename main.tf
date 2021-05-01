@@ -49,8 +49,15 @@ resource "azurerm_storage_account" "static" {
 resource "azurerm_cdn_profile" "static" {
   name                = "boundlexx-static-cdn"
   resource_group_name = azurerm_resource_group.rg.name
-  location            = azurerm_resource_group.rg.location
+  location            = "Global"
   sku                 = "Standard_Microsoft"
+}
+
+resource "azurerm_cdn_profile" "app" {
+  name                = "boundlexx-app-cdn"
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = "Global"
+  sku                 = "Premium_Verizon"
 }
 
 resource "azurerm_cdn_endpoint" "static" {
@@ -67,7 +74,7 @@ resource "azurerm_cdn_endpoint" "static" {
   origin_host_header = azurerm_storage_account.static.primary_blob_host
 
   origin {
-    name      = "boundlexx-app"
+    name      = "boundlexx-static"
     host_name = azurerm_storage_account.static.primary_blob_host
   }
 
@@ -78,13 +85,6 @@ resource "azurerm_cdn_endpoint" "static" {
       }
   }
 }
-
-# resource "cloudflare_record" "root" {
-#   zone_id = cloudflare_zone.boundlexx.id
-#   name    = var.boundlexx_domain
-#   value   = azurerm_storage_account.static.primary_blob_host
-#   type    = "CNAME"
-# }
 
 resource "cloudflare_record" "metabase" {
   zone_id = cloudflare_zone.boundlexx.id
@@ -104,19 +104,38 @@ resource "cloudflare_record" "cdn" {
 module env_local {
   source = "./boundlexx"
   prefix = "local-"
+  subdomain = "local"
   storage_account = azurerm_storage_account.static.name
+  boundlexx_domain = var.boundlexx_domain
+  resource_group = azurerm_resource_group.rg.name
+  cdn_profile = azurerm_cdn_profile.app.name
+  compress_types = var.compress_types
+  cloudflare_zone_id = cloudflare_zone.boundlexx.id
+  cloudflare_api_token = var.cloudflare_api_token
 }
 
 module env_testing {
   source = "./boundlexx"
   prefix = "testing-"
+  subdomain = "testing"
   storage_account = azurerm_storage_account.static.name
+  boundlexx_domain = var.boundlexx_domain
+  resource_group = azurerm_resource_group.rg.name
+  cdn_profile = azurerm_cdn_profile.app.name
+  compress_types = var.compress_types
+  cloudflare_zone_id = cloudflare_zone.boundlexx.id
+  cloudflare_api_token = var.cloudflare_api_token
 }
 
 module env_live {
   source = "./boundlexx"
-  prefix = ""
   storage_account = azurerm_storage_account.static.name
+  boundlexx_domain = var.boundlexx_domain
+  resource_group = azurerm_resource_group.rg.name
+  cdn_profile = azurerm_cdn_profile.app.name
+  compress_types = var.compress_types
+  cloudflare_zone_id = cloudflare_zone.boundlexx.id
+  cloudflare_api_token = var.cloudflare_api_token
 }
 
 module boundlexx_ui {
@@ -128,4 +147,12 @@ module boundlexx_ui {
   compress_types = var.compress_types
   cloudflare_zone_id = cloudflare_zone.boundlexx.id
   cloudflare_api_token = var.cloudflare_api_token
+}
+
+resource "cloudflare_record" "root" {
+  zone_id = cloudflare_zone.boundlexx.id
+  name    = var.boundlexx_domain
+  value   = module.env_live.cdn_endpoint_host
+  type    = "CNAME"
+  proxied = true
 }

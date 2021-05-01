@@ -45,8 +45,23 @@ resource "azurerm_cdn_endpoint" "ui" {
   }
 
   delivery_rule {
-    name = "NoCacheServiceWorker"
+    name = "HTTPRedirect"
     order = 1
+
+    request_scheme_condition {
+      operator = "Equal"
+      match_values = ["HTTP"]
+    }
+
+    url_redirect_action {
+      redirect_type = "PermanentRedirect"
+      protocol = "Https"
+    }
+  }
+
+  delivery_rule {
+    name = "NoCacheServiceWorker"
+    order = 2
 
     url_path_condition {
       operator = "BeginsWith"
@@ -60,7 +75,7 @@ resource "azurerm_cdn_endpoint" "ui" {
 
   delivery_rule {
     name = "NoCacheUpdates"
-    order = 2
+    order = 3
 
     url_path_condition {
       operator = "BeginsWith"
@@ -74,7 +89,7 @@ resource "azurerm_cdn_endpoint" "ui" {
 
   delivery_rule {
     name = "NoCacheIndex"
-    order = 3
+    order = 4
 
     url_path_condition {
       operator = "BeginsWith"
@@ -88,7 +103,7 @@ resource "azurerm_cdn_endpoint" "ui" {
 
   delivery_rule {
     name = "ReactRoutes"
-    order = 4
+    order = 5
 
     url_file_extension_condition {
       operator = "GreaterThan"

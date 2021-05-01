@@ -1,0 +1,80 @@
+<policy>
+    <rules>
+        <rule>
+            <description>Testing - Caching</description>
+            <match.origin.customer-origin.literal value="/80110954/boundlexx-app-testing/">
+                <feature.caching.force-internal-max-age status="200" value="300" units="seconds"/>
+                <feature.caching.external-max-age value="300" units="seconds"/>
+                <feature.caching.expires-header-treatment treatment="overwrite"/>
+                <feature.caching.cache-control-header-treatment treatment="overwrite"/>
+                <feature.caching.bypass-cache enabled="false"/>
+            </match.origin.customer-origin.literal>
+        </rule>
+        <rule>
+            <description>Live - Caching</description>
+            <match.origin.customer-origin.literal value="/80110954/boundlexx-app-api/">
+                <feature.caching.force-internal-max-age status="200" value="300" units="seconds"/>
+                <feature.caching.external-max-age value="300" units="seconds"/>
+                <feature.caching.expires-header-treatment treatment="overwrite"/>
+                <feature.caching.cache-control-header-treatment treatment="overwrite"/>
+                <feature.caching.bypass-cache enabled="false"/>
+                <match.request.request-header.regex name="Authorization" result="match" value="Token.*" ignore-case="true">
+                    <feature.caching.bypass-cache enabled="true"/>
+                </match.request.request-header.regex>
+            </match.origin.customer-origin.literal>
+        </rule>
+        <rule>
+            <description>All - Compression / Query Strings</description>
+            <match.url.url-path.regex result="match" value="/api/v*" ignore-case="false">
+                <feature.caching.compress-file-types media-types="text/plain text/html text/css text/javascript application/x-javascript application/javascript application/json application/xml application/vnd.oai.openapi application/msgpack application/vnd.oai.openapi+json"/>
+                <feature.caching.cache-key-query-string mode="include-all" parameters=""/>
+            </match.url.url-path.regex>
+        </rule>
+        <rule>
+            <description>All - Endpoint - Robots</description>
+            <match.url.url-path.literal result="match" value="/robots.txt" ignore-case="false" relative-to="origin">
+                <feature.caching.force-internal-max-age status="200" value="43200" units="seconds"/>
+                <feature.caching.external-max-age value="2592000" units="seconds"/>
+                <feature.caching.cache-control-header-treatment treatment="overwrite"/>
+                <feature.caching.bypass-cache enabled="false"/>
+            </match.url.url-path.literal>
+        </rule>
+        <rule>
+            <description>All - Endpoint - Forum Format</description>
+            <match.url.url-path.regex result="match" value="(\/api\/v\d+\/forum\/|\/forum-format\/)" ignore-case="false">
+                <feature.caching.bypass-cache enabled="true"/>
+                <feature.caching.external-max-age value="-1" units="seconds"/>
+                <feature.caching.expires-header-treatment treatment="overwrite"/>
+                <feature.caching.cache-control-header-treatment treatment="overwrite"/>
+            </match.url.url-path.regex>
+        </rule>
+        <rule>
+            <description>All - Public CORS</description>
+            <match.url.url-path.regex result="match" value="/api/v*" ignore-case="false">
+                <match.request.request-header.regex name="Origin" result="match" value=".*" ignore-case="true">
+                    <feature.headers.modify-client-response-header action="set" name="Access-Control-Expose-Headers" value="*"/>
+                    <feature.headers.modify-client-response-header action="set" name="Access-Control-Allow-Methods" value="GET, HEAD, OPTIONS"/>
+                    <feature.headers.modify-client-request-header action="set" name="Access-Control-Allow-Headers" value="*"/>
+                    <feature.headers.modify-client-response-header action="set" name="Access-Control-Allow-Origin" value="*"/>
+                </match.request.request-header.regex>
+            </match.url.url-path.regex>
+        </rule>
+        <rule>
+            <description>All - Block URLs</description>
+            <match.url.url-query.regex result="match" value="limit=[0-9]+&amp;[0-9]+" ignore-case="false">
+                <feature.access.deny-access enabled="true"/>
+            </match.url.url-query.regex>
+            <select.first-match>
+                <match.url.url-path.regex result="match" value="/admin.*" ignore-case="false">
+                    <feature.access.deny-access enabled="true"/>
+                </match.url.url-path.regex>
+                <match.url.url-path.regex result="match" value=".*wp-.*" ignore-case="false">
+                    <feature.access.deny-access enabled="true"/>
+                </match.url.url-path.regex>
+                <match.url.url-path.wildcard result="match" value="//*" ignore-case="false" relative-to="origin">
+                    <feature.access.deny-access enabled="true"/>
+                </match.url.url-path.wildcard>
+            </select.first-match>
+        </rule>
+    </rules>
+</policy>
