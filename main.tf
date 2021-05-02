@@ -156,3 +156,24 @@ resource "cloudflare_record" "root" {
   type    = "CNAME"
   proxied = true
 }
+
+resource "azurerm_log_analytics_workspace" "main" {
+  name                = "boundlexx-analytics-workspace"
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+  sku                 = "PerGB2018"
+  retention_in_days   = 30
+}
+
+resource "azurerm_application_insights" "main" {
+  name                = "boundlexx-insights"
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+  application_type    = "web"
+}
+
+resource "azurerm_application_insights_api_key" "read_telemetry" {
+  name                    = "boundlexx-insights-read-telemetry-api-key"
+  application_insights_id = azurerm_application_insights.main.id
+  read_permissions        = ["aggregate", "api", "draft", "extendqueries", "search"]
+}
